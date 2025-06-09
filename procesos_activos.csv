@@ -1,0 +1,25 @@
+import psutil
+import pandas as pd
+from datetime import datetime
+
+def obtener_procesos():
+    procesos = []
+    for proc in psutil.process_iter(['pid', 'name', 'username', 'cpu_percent', 'memory_info', 'create_time']):
+        try:
+            p = proc.info
+            procesos.append({
+                'pid': p['pid'],
+                'nombre': p['name'],
+                'usuario': p['username'],
+                'cpu': p['cpu_percent'],
+                'memoria_MB': p['memory_info'].rss / (1024 * 1024),  # memoria en MB
+                'inicio': datetime.fromtimestamp(p['create_time']).isoformat(),
+                'es_malicioso': 0  # Puedes modificar esto manualmente
+            })
+        except (psutil.NoSuchProcess, psutil.AccessDenied):
+            continue
+    return pd.DataFrame(procesos)
+
+df = obtener_procesos()
+df.to_csv("procesos_activos.csv", index=False)
+print("CSV guardado como 'procesos_activos.csv'")
